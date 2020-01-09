@@ -29,6 +29,7 @@ class CustomAdLayout: RelativeLayout {
     var supportedAppSize = ""
     var adUnit = ""
     var layoutWidth = 0
+    var isFailedPreviously = false
 
     constructor(context: Context): super(context)
     constructor(context: Context, attrs: AttributeSet): super(context, attrs) {
@@ -40,7 +41,7 @@ class CustomAdLayout: RelativeLayout {
             try {
                 shouldShowAnimation = getBoolean(R.styleable.CustomAdLayout_enableAnimation, false)
                 animationDuration = getInt(R.styleable.CustomAdLayout_animationDuration, 0).toLong()
-                supportedAppSize = getString(R.styleable.CustomAdLayout_supportedAppSize) ?: ""
+                supportedAppSize = getString(R.styleable.CustomAdLayout_supportedAdSize) ?: ""
                 adUnit = getString(R.styleable.CustomAdLayout_adUnit) ?: ""
 
                 val isProperlyInitialized = supportedAppSize.isNotEmpty() && adUnit.isNotEmpty()
@@ -109,13 +110,14 @@ class CustomAdLayout: RelativeLayout {
             this.adUnitId = adUnit
             val adSizesList = mutableListOf<AdSize>()
             supportedAppSize.split(",").map {
-                adSizesList.add(AdSize(it.split("x")[0].toInt(), it.split("x")[1].toInt()))
+                adSizesList.add(AdSize(it.trim().split("x")[0].toInt(), it.trim().split("x")[1].toInt()))
             }
             setAdSizes(*adSizesList.toTypedArray())
             adListener = object: AdListener() {
                 override fun onAdFailedToLoad(p0: Int) {
                     super.onAdFailedToLoad(p0)
                     Log.d(TAG, "fail to load ad article= ${p0}")
+                    isFailedPreviously = true
                     listOf(parent.parent as ViewGroup, parent as ViewGroup).map {
                         it.startAnimation(
                             CustomLayoutAnimation(0, it).apply {
@@ -145,7 +147,7 @@ class CustomAdLayout: RelativeLayout {
     }
 
     private fun resizeAd(animTime: Long) {
-        if (!::adView.isInitialized) {
+        if (!::adView.isInitialized || isFailedPreviously) {
             return
         }
         adView.apply {

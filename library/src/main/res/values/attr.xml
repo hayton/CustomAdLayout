@@ -3,7 +3,7 @@
 
     <declare-styleable name="CustomAdLayout">
         <attr name="enableAnimation" format="boolean"/>
-        <attr name="supportedAppSize" format="string"/>
+        <attr name="supportedAdSize" format="string"/>
         <attr name="adUnit" format="string"/>
         <attr name="animationDuration" format="integer"/>
     </declare-styleable>

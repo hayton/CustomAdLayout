@@ -14,6 +14,13 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
+        libraryVariants.all { variant ->
+            variant.outputs.all { output ->
+                def filename = "customAdLayout-${variant.name}-${defaultConfig.versionName}.aar"
+                outputFileName = filename
+            }
+        }
+
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
