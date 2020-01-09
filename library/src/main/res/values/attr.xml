@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="CustomAdLayout">
+        <attr name="enableAnimation" format="boolean"/>
+        <attr name="supportedAppSize" format="string"/>
+        <attr name="adUnit" format="string"/>
+        <attr name="animationDuration" format="integer"/>
+    </declare-styleable>
+
+
+</resources>
