@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:background="#ffffff"
         app:supportedAdSize="970x250,300x250"
-        app:adUnit="/1015938/APP_TOP"
+        app:adUnit=""
         app:animationDuration="300"
         app:enableAnimation="true"
         app:layout_constraintBottom_toBottomOf="parent"
