@@ -1,6 +1,7 @@
 package com.hypebeast.adview
 
 import android.content.Context
+import android.content.res.Configuration
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
@@ -24,11 +25,10 @@ class CustomAdLayout: RelativeLayout {
     lateinit var adRequest: PublisherAdRequest
     lateinit var adView : PublisherAdView
     var adHolder: RelativeLayout
-    var shouldShowAnimation = false
-    var animationDuration = 0L
-    var supportedAppSize = ""
-    var adUnit = ""
-    var layoutWidth = 0
+    private var shouldShowAnimation = false
+    private var animationDuration = 0L
+    private var supportedAdSize = ""
+    private var adUnit = ""
     var isFailedPreviously = false
 
     constructor(context: Context): super(context)
@@ -41,13 +41,13 @@ class CustomAdLayout: RelativeLayout {
             try {
                 shouldShowAnimation = getBoolean(R.styleable.CustomAdLayout_enableAnimation, false)
                 animationDuration = getInt(R.styleable.CustomAdLayout_animationDuration, 0).toLong()
-                supportedAppSize = getString(R.styleable.CustomAdLayout_supportedAdSize) ?: ""
+                supportedAdSize = getString(R.styleable.CustomAdLayout_supportedAdSize) ?: ""
                 adUnit = getString(R.styleable.CustomAdLayout_adUnit) ?: ""
 
-                val isProperlyInitialized = supportedAppSize.isNotEmpty() && adUnit.isNotEmpty()
+                val isProperlyInitialized = supportedAdSize.isNotEmpty() && adUnit.isNotEmpty()
                 if (!isProperlyInitialized) {
                     when {
-                        (supportedAppSize.isEmpty()) -> throw IllegalStateException("SupportedAppSize is empty")
+                        (supportedAdSize.isEmpty()) -> throw IllegalStateException("SupportedAppSize is empty")
                         (adUnit.isEmpty()) -> throw IllegalStateException("AdUnit is empty")
                     }
                 }
@@ -61,13 +61,12 @@ class CustomAdLayout: RelativeLayout {
     init {
         View.inflate(context, R.layout.custom_ad_layout, this)
         adHolder = findViewById(R.id.adHolder)
-
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
 
-        (this@CustomAdLayout.parent as ViewGroup).addOnLayoutChangeListener(object :
+        (this@CustomAdLayout.parent as? ViewGroup)?.addOnLayoutChangeListener(object :
             OnLayoutChangeListener {
             override fun onLayoutChange(
                 v: View?,
@@ -87,7 +86,6 @@ class CustomAdLayout: RelativeLayout {
                     resizeAd(0)
                     (this@CustomAdLayout.parent as ViewGroup).removeOnLayoutChangeListener(this)
                 }
-
             }
         })
     }
@@ -109,7 +107,7 @@ class CustomAdLayout: RelativeLayout {
             adHolder.addView(this)
             this.adUnitId = adUnit
             val adSizesList = mutableListOf<AdSize>()
-            supportedAppSize.split(",").map {
+            supportedAdSize.split(",").map {
                 adSizesList.add(AdSize(it.trim().split("x")[0].toInt(), it.trim().split("x")[1].toInt()))
             }
             setAdSizes(*adSizesList.toTypedArray())
@@ -152,11 +150,8 @@ class CustomAdLayout: RelativeLayout {
         }
         adView.apply {
             val layoutparams = this@CustomAdLayout.layoutParams as MarginLayoutParams
-            val initialWidth =  if
-                                    (layoutWidth == 0) (this@CustomAdLayout.parent as ViewGroup).width
-                                else
-                                    layoutWidth
-            val screenWidth = (initialWidth.toFloat() - layoutparams.marginStart - layoutparams.marginEnd).apply { Log.d(TAG, "screenwidth; onadloaded= $this, layoutWidth= ${layoutWidth}") }
+            val initialWidth = (this@CustomAdLayout.parent as ViewGroup).width
+            val screenWidth = (initialWidth.toFloat() - layoutparams.marginStart - layoutparams.marginEnd)
 
             val adWidth = adSize.getWidthInPixels(context)
             this@CustomAdLayout.layoutParams.width = adWidth /** must include this line for adview to set its width properly */
