@@ -29,7 +29,6 @@ class CustomAdLayout: RelativeLayout {
     private var animationDuration = 0L
     private var supportedAdSize = ""
     private var adUnit = ""
-    var isFailedPreviously = false
 
     constructor(context: Context): super(context)
     constructor(context: Context, attrs: AttributeSet): super(context, attrs) {
@@ -40,7 +39,10 @@ class CustomAdLayout: RelativeLayout {
         ).apply {
             try {
                 shouldShowAnimation = getBoolean(R.styleable.CustomAdLayout_enableAnimation, false)
-                animationDuration = getInt(R.styleable.CustomAdLayout_animationDuration, 0).toLong()
+                animationDuration = if (shouldShowAnimation)
+                                        getInt(R.styleable.CustomAdLayout_animationDuration, 0).toLong()
+                                    else
+                                        0L
                 supportedAdSize = getString(R.styleable.CustomAdLayout_supportedAdSize) ?: ""
                 adUnit = getString(R.styleable.CustomAdLayout_adUnit) ?: ""
 
@@ -83,7 +85,7 @@ class CustomAdLayout: RelativeLayout {
                     if (!::adView.isInitialized) {
                         return
                     }
-                    resizeAd(0)
+                    resizeAd(animTime = 0)
                     (this@CustomAdLayout.parent as ViewGroup).removeOnLayoutChangeListener(this)
                 }
             }
@@ -92,6 +94,28 @@ class CustomAdLayout: RelativeLayout {
 
     fun loadAd(publisherAdRequest: PublisherAdRequest) {
         adRequest = publisherAdRequest
+        (this@CustomAdLayout.parent as? ViewGroup)?.addOnLayoutChangeListener(object :
+            OnLayoutChangeListener {
+            override fun onLayoutChange(
+                v: View?,
+                left: Int,
+                top: Int,
+                right: Int,
+                bottom: Int,
+                oldLeft: Int,
+                oldTop: Int,
+                oldRight: Int,
+                oldBottom: Int
+            ) {
+                if (right != oldRight) {
+                    if (!::adView.isInitialized) {
+                        return
+                    }
+                    resizeAd(animTime = animationDuration)
+                    (this@CustomAdLayout.parent as ViewGroup).removeOnLayoutChangeListener(this)
+                }
+            }
+        })
         adView.loadAd(publisherAdRequest)
     }
 
@@ -115,12 +139,11 @@ class CustomAdLayout: RelativeLayout {
                 override fun onAdFailedToLoad(p0: Int) {
                     super.onAdFailedToLoad(p0)
                     Log.d(TAG, "fail to load ad article= ${p0}")
-                    isFailedPreviously = true
                     listOf(parent.parent as ViewGroup, parent as ViewGroup).map {
                         it.startAnimation(
                             CustomLayoutAnimation(0, it).apply {
                                 fillAfter = true
-                                duration = if (shouldShowAnimation) animationDuration else 0
+                                duration = animationDuration
                             }
                         )
                     }
@@ -129,12 +152,12 @@ class CustomAdLayout: RelativeLayout {
                 override fun onAdLoaded() {
                     super.onAdLoaded()
 
-                    resizeAd(animationDuration)
+                    resizeAd(animTime = animationDuration)
 
                     startAnimation(
                         AlphaAnimation(0f, 1f).apply {
                             fillAfter = true
-                            duration = if (shouldShowAnimation) animationDuration + 50 else 0
+                            duration = animationDuration + 50
                         }
                     )
 
@@ -144,14 +167,13 @@ class CustomAdLayout: RelativeLayout {
         }
     }
 
-    private fun resizeAd(animTime: Long) {
-        if (!::adView.isInitialized || isFailedPreviously) {
+    private fun resizeAd(parentWidth: Int = (this@CustomAdLayout.parent as ViewGroup).width, animTime: Long) {
+        if (!::adView.isInitialized) {
             return
         }
         adView.apply {
             val layoutparams = this@CustomAdLayout.layoutParams as MarginLayoutParams
-            val initialWidth = (this@CustomAdLayout.parent as ViewGroup).width
-            val screenWidth = (initialWidth.toFloat() - layoutparams.marginStart - layoutparams.marginEnd)
+            val screenWidth = (parentWidth.toFloat() - layoutparams.marginStart - layoutparams.marginEnd).apply { Log.d(TAG, "screenwidth on resize= $this") }
 
             val adWidth = adSize.getWidthInPixels(context)
             this@CustomAdLayout.layoutParams.width = adWidth /** must include this line for adview to set its width properly */
