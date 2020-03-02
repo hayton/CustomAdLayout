@@ -182,7 +182,9 @@ class CustomAdLayout: RelativeLayout {
             val ratio = (screenWidth / adWidth).coerceAtMost(1f)
             scaleX = ratio
             scaleY = ratio
-            val height = ((adSize.getHeightInPixels(context) * ratio)).toInt() + layoutparams.topMargin + layoutparams.bottomMargin + 1
+            val height = (((adSize.getHeightInPixels(context) * ratio)).toInt() + layoutparams.topMargin + layoutparams.bottomMargin + 1).apply {
+                Log.d(TAG, "adHeight= $this, adview size= ${adView.adSize}")
+            }
 
             (layoutParams as LayoutParams).setMargins(
                 0,
