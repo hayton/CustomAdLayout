@@ -21,6 +21,13 @@ import kotlin.math.abs
  * Created by hayton on 2020-01-07.
  */
 class CustomAdLayout: RelativeLayout {
+
+
+    interface OnResizeListener {
+        fun onResizing(scale: Float)
+    }
+
+
     var TAG = this::class.java.simpleName
     lateinit var adRequest: PublisherAdRequest
     lateinit var adView : PublisherAdView
@@ -29,6 +36,8 @@ class CustomAdLayout: RelativeLayout {
     private var animationDuration = 0L
     private var supportedAdSize = ""
     private var adUnit = ""
+    var hasResized = false
+    lateinit var listener: OnResizeListener
 
     constructor(context: Context): super(context)
     constructor(context: Context, attrs: AttributeSet): super(context, attrs) {
@@ -92,7 +101,7 @@ class CustomAdLayout: RelativeLayout {
         })
     }
 
-    fun loadAd(publisherAdRequest: PublisherAdRequest) {
+    fun loadAd(publisherAdRequest: PublisherAdRequest): CustomAdLayout {
         adRequest = publisherAdRequest
         (this@CustomAdLayout.parent as? ViewGroup)?.addOnLayoutChangeListener(object :
             OnLayoutChangeListener {
@@ -117,6 +126,11 @@ class CustomAdLayout: RelativeLayout {
             }
         })
         adView.loadAd(publisherAdRequest)
+        return this
+    }
+
+    fun setOnResizeListener(resizeListener: OnResizeListener) {
+        listener = resizeListener
     }
 
     fun isAdLoaded(): Boolean{
@@ -182,9 +196,14 @@ class CustomAdLayout: RelativeLayout {
             val ratio = (screenWidth / adWidth).coerceAtMost(1f)
             scaleX = ratio
             scaleY = ratio
-            val height = (((adSize.getHeightInPixels(context) * ratio)).toInt() + layoutparams.topMargin + layoutparams.bottomMargin + 1).apply {
-                Log.d(TAG, "adHeight= $this, adview size= ${adView.adSize}")
+            if (::listener.isInitialized) {
+                listener.onResizing(ratio)
             }
+            hasResized = ratio < 1f
+            val height =
+                (((adSize.getHeightInPixels(context) * ratio)).toInt() + layoutparams.topMargin + layoutparams.bottomMargin + 1).apply {
+                    Log.d(TAG, "adHeightInPixels= ${adSize.getHeightInPixels(context)}, scaled adHeight= $this, adview size= ${adView.adSize}")
+                }
 
             (layoutParams as LayoutParams).setMargins(
                 0,
@@ -201,6 +220,7 @@ class CustomAdLayout: RelativeLayout {
                     }
                 )
             }
+
         }
     }
 
