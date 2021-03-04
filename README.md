@@ -22,4 +22,4 @@ Custom attribute
 | adUnit | String | Yes | The adUnit of the AdView|
 | supportedAdSize | String | Yes | The AdSize supported by this AdView, can be multiple|
 | enableAnimation | Boolean | No | If ```true```, animation will be played during resize. Default is false |
-| animationDuration | Integer | No | The of the resize animation. This value will be ignored if ```enableAnimation``` is not set |
+| animationDuration | Integer | No | The duration of the resize animation. This value will be ignored if ```enableAnimation``` is not set |
